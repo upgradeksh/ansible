@@ -1,0 +1,53 @@
+---
+
+  - name: "jmxremote | template {{ tomcat.path.bin }}/setenv.d/40-jmxremote.sh"
+    template:
+      src: 40-jmxremote.sh.j2
+      dest: "{{ tomcat.path.bin }}/setenv.d/40-jmxremote.sh"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    when: jmxremote_disable|default(False)|bool == False
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - jmxremote
+
+  - name: "jmxremote | content {{ tomcat.path.conf }}/jxm.user"
+    copy:
+      dest: "{{ tomcat.path.conf }}/jmx.user"
+      content: "{{ jvm.jmxremote.user }} {{ jvm.jmxremote.perm }}"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - jmxremote
+
+  - name: "jmxremote | content {{ tomcat.path.conf }}/jxm.pass"
+    copy:
+      dest: "{{ tomcat.path.conf }}/jmx.pass"
+      content: "{{ jvm.jmxremote.user }} {{ jvm.jmxremote.pass }}"
+      owner: "{{ tomcat.user.name }}"
+      group: root
+      mode: 0400
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - jmxremote
+
+## disabling task has to be at the end of tasks
+  - name: "jmxremote | absent {{ tomcat.path.bin }}/setenv.d/40-jmxremote.sh"
+    file:
+      path: "{{ tomcat.path.bin }}/setenv.d/40-jmxremote.sh"
+      state: absent
+    become: yes
+    when: jmxremote_disable|default(False)
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - jmxremote

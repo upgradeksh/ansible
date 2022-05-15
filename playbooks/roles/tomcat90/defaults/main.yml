@@ -1,0 +1,175 @@
+---
+
+  java_version: 11
+
+  env:
+  domain:
+  ssl_cn:
+  deploy_context_war: ROOT.war
+  deploy_host: deploy.ansible.test
+  deploy_src: /var/lib/jenkins/workspace/{{ domain }}/deploy
+  deploy_uri: "{{ deploy_host }}/{{ domain }}/deploy/{{ deploy_context_war }}"
+
+  ## hard fixed by installed package
+  catalina_base: /var/lib/tomcat9
+  tomcat:
+    user:
+      name: tomcat
+      id: 990
+    group:
+      name: tomcat
+      id: 990
+
+    path:
+      bin:          "{{ catalina_base }}/bin"
+      conf:         "{{ catalina_base }}/conf"
+      logs:         "{{ catalina_base }}/logs"
+      lib:          "{{ catalina_base }}/lib"
+      cert:         "{{ catalina_base }}/cert"
+      appbase:      "{{ catalina_base }}/webapps/{{ domain }}"
+      host_context: "{{ catalina_base }}/conf/Catalina/{{ domain }}"
+      environ_file: "{{ catalina_base }}/bin/environ"
+      ext_lib:
+    systemd:
+      unit: tomcat9.service
+      readwritepaths: []
+      environmentfiles:
+        - "{{ catalina_base }}/bin/environ"
+
+  http_server: enable
+  https_server: disable
+
+  ## we don't support ip based request
+  localhost_index_message: Can not find domain
+
+  ## pinpoint configuration
+  pinpoint_agent: enable
+  pinpoint:
+    ver: 2.2.2
+    log4j2:
+      level: WARN
+    profiler:
+      collector:
+        ip: collector.pinpoint.test
+      sampling:
+        rate: 1
+      tomcat:
+        excludeurl: /**/*.png, /**/*.jpg, /**/*.css, /**/*.css.map, /**/*.js, /**/*.woff2, /**/health, /**/*.ico, /robots.txt
+      ignore_error_handler:
+        myErrorHandler:
+          class_name: java.io.FileNotFoundException,java.net.SocketTimeoutException
+          exception_message: ""
+  pinpoint_agent_name: "pinpoint-agent-{{ pinpoint.ver }}"
+  pinpoint_agent_dir: "{{ tomcat.path.lib }}/{{ pinpoint_agent_name }}"
+
+  ## tomcat configuration
+  catalina_opts_from_jenkins:
+  env_vars:
+  heap_size:
+  heap:
+    Xms: "{{ heap_size | default('70%', true) }}"
+    Xmx: "{{ heap_size | default('70%', true) }}"
+
+  jvm:
+    catalina_opts:
+      "-server": ""
+      "-Dfile.encoding=": "UTF8"
+      "-Duser.timezone=": "Asia/Seoul"
+      "-Djava.security.egd=": "file:/dev/./urandom"
+      "-Djava.net.preferIPv4Stack=": "true"
+      "-XX:+HeapDumpOnOutOfMemoryError": ""
+      "-XX:HeapDumpPath=": "$CATALINA_BASE/logs"
+      "-XX:ErrorFile=": "$CATALINA_BASE/logs/hs_err_pid%p.log"
+
+    java_opts:
+      "-Dsentry.servername=": "$(hostname)"
+      "-XX:+UseG1GC": ""
+      "-XX:+DisableExplicitGC": ""
+      "-verbose:gc": ""
+      "-XX:+PrintGC": ""
+      "-XX:+PrintGCDetails": ""
+      "-Xloggc:": "$CATALINA_BASE/logs/gc.log"
+
+    java_opts_ext:
+
+    jmxremote_disable:
+    jmxremote:
+      user: jmx
+      pass: jmx
+      perm: readonly
+      port: 38080
+
+  ## server.xml
+  conf:
+    Service:
+      CommonAttr: &commonAttr
+        protocol: "org.apache.coyote.http11.Http11NioProtocol"
+        URIEncoding: "UTF-8"
+        maxHttpHeaderSize: 32768
+        connectionTimeout: 20000
+        acceptCount: 100
+        maxConnections: 10000
+        maxThreads: 500
+        minSpareThreads: 25
+        compression: "on"
+        compressionMinSize : 512
+        compressibleMimeType: "text/plain,text/html,text/xml,text/plain,text/css,text/csv,text/javascript,application/javascript,application/json,application/ld+json"
+
+      Connector_http:
+        _attr:
+          <<: *commonAttr
+          port: 8080
+
+      Connector_https:
+        _attr:
+          <<: *commonAttr
+          port: 8443
+          scheme: "https"
+          secure: "true"
+          SSLEnabled: "true"
+          defaultSSLHostConfigName: "{{ ssl_cn }}"
+          sslImplementationName: "org.apache.tomcat.util.net.openssl.OpenSSLImplementation"
+
+        SSLHostConfig:
+          _attr:
+            hostName: "{{ ssl_cn }}"
+            sslProtocol: "TLS"
+            protocols: "+TLSv1.1,+TLSv1.2"
+
+          Certificate:
+            certificateFile:      "${catalina.base}/cert/{{ ssl_cn }}/cert.pem"
+            certificateKeyFile:   "${catalina.base}/cert/{{ ssl_cn }}/key.pem"
+            certificateChainFile: "${catalina.base}/cert/{{ ssl_cn }}/chain.pem"
+
+      Engine:
+        defaultHost: "localhost"
+
+        localhost:
+          _attr:
+            name: "localhost"
+            appBase: "webapps"
+            unpackWARs: "true"
+            autoDeploy: "false"
+            undeployOldVersions: "false"
+            deployOnStartup: "true"
+
+        domain:
+          _attr:
+            name: "{{ domain }}"
+            appBase: "webapps/{{ domain }}"
+            unpackWARs: "true"
+            autoDeploy: "false"
+            undeployOldVersions: "false"
+            deployOnStartup: "true"
+          Alias:
+          Valves:
+            - className: "org.apache.catalina.valves.AccessLogValve"
+              rotatable: "false"
+              buffered: "false"
+              directory: "logs"
+              prefix: "access"
+              suffix: ".log"
+              pattern: '%a %l %u "%{yyyy-MM-dd}tT%{HH:mm:ssZ}t" "%r" %s %b "%{Referer}i" "%{User-Agent}i" "%{Cookie}i" "%{X-Forwarded-For}i" %I %v %D'
+            - className: "org.apache.catalina.valves.ErrorReportValve"
+              showReport: "false"
+              showServerInfo: "false"

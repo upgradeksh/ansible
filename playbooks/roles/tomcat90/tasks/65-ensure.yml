@@ -1,0 +1,7 @@
+---
+- name: "ensure {{ tomcat.systemd.unit }} is running"
+  service:
+    name: "{{ tomcat.systemd.unit }}"
+    state: started
+    enabled: yes
+  become: yes

@@ -1,0 +1,21 @@
+---
+
+## tomcat 실행계정은 tomcat role에 의해서 정의 되어지고
+## ext_lib_path 는 application 구동에 필요한 공간 이지만 tomcat 입장에서는 외부 자원이다.
+## tomcat 및 외부 자원 이렇게 2가지 타입의 자원에 대하여
+## 일관적으로 하나의 방법을 통해 소유자 지정이 필요하다.
+## tomcat.user.name 의 값을 사용하며 본 task는 이를 보증하기 위한 task 이다
+  - name: "interlock | directory {{ tomcat.path.ext_lib }}"
+    file:
+      path: "{{ tomcat.path.ext_lib }}"
+      state: directory
+      recurse: yes
+      owner: "{{ tomcat.user.name }}"
+      group: adm
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    when:
+      - tomcat.path.ext_lib|default(false)
+    tags:
+      - interlock

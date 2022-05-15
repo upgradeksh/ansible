@@ -1,0 +1,7 @@
+## made by ansible
+{% if conf.Service.Connector_http.port is defined %}
+0.0.0.0/0:{{ conf.Service.Connector_http.port }},{{ conf.Service.Connector_http.port }}
+{% endif %}
+{% if conf.Service.Connector_https.port is defined %}
+0.0.0.0/0:{{ conf.Service.Connector_https.port }},{{ conf.Service.Connector_https.port }}
+{% endif %}

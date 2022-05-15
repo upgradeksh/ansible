@@ -1,0 +1,23 @@
+---
+
+  - name: "java | apt_repository debian-security stretch"
+    apt_repository:
+      repo: "deb http://security.debian.org/debian-security stretch/updates main"
+      filename: debian-security-stretch
+      state: present
+    become: yes
+    when:
+      - ansible_distribution == 'Debian'
+      - java_version == 8
+    tags:
+      - java
+
+  - name: "java | apt openjdk-{{ java_version }}-jre-headless (latest)"
+    apt:
+      pkg:
+       - openjdk-{{ java_version }}-jre-headless
+      state: latest
+      update_cache: yes
+    become: yes
+    tags:
+      - java

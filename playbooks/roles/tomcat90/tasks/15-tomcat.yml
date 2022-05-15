@@ -1,0 +1,39 @@
+---
+
+  - name: "tomcat | apt tomcat9 openssl (latest)"
+    apt:
+      pkg:
+        - tomcat9
+        - openssl
+      update_cache: yes
+      state: latest
+      policy_rc_d: 101
+      install_recommends: yes ## for libtcnative-1(apr library)
+    become: yes
+    tags:
+      - tomcat
+
+  - name: "tomcat | directory {{ catalina_base }}/webapps/ROOT"
+    file:
+      path: "{{ catalina_base }}/webapps/ROOT"
+      state: directory
+      owner: "{{ tomcat.user.name }}"
+      group: "{{ tomcat.group.name }}"
+      mode: 0750
+    become: yes
+    tags:
+      - tomcat
+
+  - name: "tomcat | template {{ catalina_base }}/webapps/ROOT/index.html"
+    template:
+      src: index.html.j2
+      dest: "{{ catalina_base }}/webapps/ROOT/index.html"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - tomcat
+      - index.html

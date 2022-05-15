@@ -1,0 +1,27 @@
+---
+
+  ## owner of this directory is important
+  - name: "deploy | directory {{ tomcat.path.appbase }}"
+    file:
+      path: "{{ tomcat.path.appbase }}"
+      state: directory
+      owner: "{{ tomcat.user.name }}"
+      group: "{{ tomcat.group.name }}"
+      mode: 0750
+    become: yes
+    tags:
+      - deploy
+
+  - name: "deploy | get_url {{ deploy_uri }}"
+    get_url:
+      url: "{{ deploy_uri }}"
+      dest:  "{{ tomcat.path.appbase }}"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    changed_when: True
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - deploy

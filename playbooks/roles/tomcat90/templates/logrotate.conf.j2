@@ -1,0 +1,12 @@
+## made by ansible
+{{ tomcat.path.logs }}/access.log {
+    rotate 1000
+    maxage 7
+    size 100M
+    copytruncate
+    olddir {{ tomcat.path.logs }}/old
+    compress
+    missingok
+    create 640
+    notifempty
+}

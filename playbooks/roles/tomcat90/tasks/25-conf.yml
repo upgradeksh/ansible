@@ -1,0 +1,150 @@
+---
+
+### server.xml
+  - name: "conf | template {{ tomcat.path.conf }}/server.xml"
+    template:
+      src: server.xml.j2
+      dest: "{{ tomcat.path.conf }}/server.xml"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - conf
+      - server.xml
+
+### context.xml
+### context dir is only created when the tomcat is executed successfully
+### so we need to creaste this directory when we deploy application at the first time
+  - name: "conf | directory {{ tomcat.path.host_context }}"
+    file:
+      path: "{{ tomcat.path.host_context }}"
+      state: "directory"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      recurse: yes
+    become: yes
+    tags:
+      - conf
+      - context_dir
+
+### context.xml
+# https://tomcat.apache.org/tomcat-9.0-doc/config/context.html#Defining_a_context
+  - name: "conf | template {{ tomcat.path.host_context }}/context.xml.default"
+    template:
+      src: context.xml.default.j2
+      dest: "{{ tomcat.path.host_context }}/context.xml.default"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - conf
+      - context.xml.default
+
+## bin/*
+  - name: "conf | directory {{ tomcat.path.bin }}/setenv.d"
+    file:
+      path: "{{ tomcat.path.bin }}/setenv.d"
+      state: "directory"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      recurse: yes
+    become: yes
+    tags:
+      - conf
+      - setenv
+
+  - name: "conf | content {{ tomcat.path.bin }}/setenv.sh"
+    copy:
+      dest:  "{{ tomcat.path.bin }}/setenv.sh"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+      content: |
+        for add_env in $(ls $CATALINA_BASE/bin/setenv.d/*.sh)
+        do
+            test -r $add_env && . $add_env
+        done
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - conf
+      - setenv
+
+  - name: "conf | template {{ tomcat.path.bin }}/setenv.d/10-javahome.sh"
+    template:
+      src:   10-javahome.sh.j2
+      dest:  "{{ tomcat.path.bin }}/setenv.d/10-javahome.sh"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - conf
+      - java
+      - setenv
+
+  - name: "conf | template {{ tomcat.path.bin }}/setenv.d/20-catalina_opts.sh"
+    template:
+      src: 20-catalina_opts.sh.j2
+      dest: "{{ tomcat.path.bin }}/setenv.d/20-catalina_opts.sh"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - conf
+      - setenv
+
+  - name: "conf | template {{ tomcat.path.bin }}/setenv.d/25-heap.sh"
+    template:
+      src: 25-heap.sh.j2
+      dest: "{{ tomcat.path.bin }}/setenv.d/25-heap.sh"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0640
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - conf
+      - setenv
+      - heap
+
+  - name: "conf | template {{ tomcat.path.bin }}/setenv.d/30-java_opts.sh"
+    template:
+      src: 30-java_opts.sh.j2
+      dest: "{{ tomcat.path.bin }}/setenv.d/30-java_opts.sh"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0600
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - conf
+      - setenv
+
+  - name: "conf | template {{ tomcat.path.environ_file }}"
+    template:
+      src: environ.j2
+      dest: "{{ tomcat.path.environ_file }}"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0600
+    become: yes
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - conf
+      - setenv

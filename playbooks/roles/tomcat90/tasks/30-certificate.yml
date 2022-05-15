@@ -1,0 +1,29 @@
+---
+
+  - name: "certificate | directory {{ tomcat.path.cert }}/{{ ssl_cn }}"
+    file:
+      path: "{{ tomcat.path.cert }}/{{ ssl_cn }}"
+      state: directory
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0750
+    become: yes
+    tags:
+      - certificate
+
+  - name: "certificate | copy {{ tomcat.path.cert }}/{{ ssl_cn }}/*.pem"
+    copy:
+      src:   "deploy/cert/{{ ssl_cn }}/{{ item.value | basename }}"
+      dest:  "{{ tomcat.path.cert }}/{{ ssl_cn }}/{{ item.value | basename }}"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 0440
+    become: yes
+    with_dict: "{{ conf.Service.Connector_https.SSLHostConfig.Certificate }}"
+    when:
+      - conf.Service.Connector_https.SSLHostConfig.Certificate is defined
+      - https_server == "enable"
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - certificate

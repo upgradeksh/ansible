@@ -1,0 +1,4 @@
+CATALINA_OPTS="$CATALINA_OPTS -javaagent:$CATALINA_BASE/lib/pinpoint-agent-{{ pinpoint.ver }}/pinpoint-bootstrap.jar"
+CATALINA_OPTS="$CATALINA_OPTS -Dpinpoint.applicationName={{ domain[0:24] }}"
+CATALINA_OPTS="$CATALINA_OPTS -Dpinpoint.agentId={{ ansible_hostname[0:24] }}"
+CATALINA_OPTS="$CATALINA_OPTS -Dpinpoint.profiler.profiles.active={{ env }}"

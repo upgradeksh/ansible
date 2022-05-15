@@ -1,0 +1,28 @@
+---
+
+  - name: "authbind | apt authbind (latest)"
+    apt:
+      name: authbind
+      state: latest
+    become: yes
+    tags:
+       - authbind
+
+  - name: "authbind | getent passwd {{ tomcat.user }}"
+    getent:
+      database: passwd
+      key: "{{ tomcat.user }}"
+    tags:
+       - authbind
+
+  - name: "authbind | template /etc/authbind/byuid/{{ getent_passwd[tomcat.user][1] }}"
+    template:
+      src:   "{{ role_path }}/templates/authbind-byuid.j2"
+      dest:  "/etc/authbind/byuid/{{ getent_passwd[tomcat.user][1] }}"
+      owner: "{{ tomcat.user  }}"
+      group: "{{ tomcat.group }}"
+      mode: 0700
+    become: yes
+    when: tomcat.user != 'root'
+    tags:
+      - authbind

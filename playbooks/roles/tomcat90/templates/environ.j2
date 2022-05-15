@@ -1,0 +1,5 @@
+{% if env_vars is defined and env_vars %}
+{% for key, value in env_vars.items() %}
+{{ key }}="{{ value }}"
+{% endfor %}
+{% endif %}

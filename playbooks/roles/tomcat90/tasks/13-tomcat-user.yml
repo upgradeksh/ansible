@@ -1,0 +1,24 @@
+---
+
+  - name: "tomcat | groupadd -g {{ tomcat.group.id }} {{ tomcat.group.name }}"
+    group:
+      name: "{{ tomcat.group.name }}"
+      gid: "{{ tomcat.group.id }}"
+      state: present
+    become: yes
+    tags:
+      - tomcat
+      - user
+
+  - name: "tomcat | useradd -u {{ tomcat.user.id }} {{ tomcat.user.name }}"
+    user:
+      name: "{{ tomcat.user.name }}"
+      comment: Apache Tomcat
+      uid: "{{ tomcat.user.id }}"
+      group: "{{ tomcat.group.name }}"
+      shell: /usr/sbin/nologin
+      state: present
+    become: yes
+    tags:
+      - tomcat
+      - user

@@ -1,0 +1,35 @@
+---
+
+  - name: "systemd | lineinfile /lib/systemd/system/tomcat9.service (EnvironmentFile)"
+    lineinfile:
+      path: /lib/systemd/system/tomcat9.service
+      state: present
+      insertafter: '^\s*Environment='
+      line: "EnvironmentFile={{ item }}"
+    loop: "{{ tomcat.systemd.environmentfiles}}"
+    become: yes
+    when:
+      - tomcat.systemd.environmentfiles is defined
+      - tomcat.systemd.environmentfiles
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - systemd
+      - readwritepaths
+
+  - name: "systemd | lineinfile /lib/systemd/system/tomcat9.service (ReadWritePaths)"
+    lineinfile:
+      path: /lib/systemd/system/tomcat9.service
+      state: present
+      insertafter: '^\s*ReadWritePaths='
+      line: "ReadWritePaths={{ item }}"
+    loop: "{{ tomcat.systemd.readwritepaths }}"
+    become: yes
+    when:
+      - tomcat.systemd.readwritepaths is defined
+      - tomcat.systemd.readwritepaths
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - systemd
+      - readwritepaths

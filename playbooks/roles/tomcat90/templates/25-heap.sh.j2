@@ -1,0 +1,10 @@
+{% if heap.Xms|last == '%' %}
+CATALINA_OPTS="$CATALINA_OPTS -Xms{{ heap.Xms|replace('%', '')|int * ansible_memtotal_mb // 100 }}m"  ## {{ heap.Xms }}
+{% else %}
+CATALINA_OPTS="$CATALINA_OPTS -Xms{{ heap.Xms }}"
+{% endif %}
+{% if heap.Xmx|last == '%' %}
+CATALINA_OPTS="$CATALINA_OPTS -Xmx{{ heap.Xmx|replace('%', '')|int * ansible_memtotal_mb // 100 }}m"  ## {{ heap.Xmx }}
+{% else %}
+CATALINA_OPTS="$CATALINA_OPTS -Xmx{{ heap.Xmx }}"
+{% endif %}

@@ -1,0 +1,8 @@
+{% for key, value in jvm.catalina_opts.items() %}
+CATALINA_OPTS="$CATALINA_OPTS {{ key }}{{ value }}"
+{% endfor %}
+{% if catalina_opts_from_jenkins %}
+{% for opt in catalina_opts_from_jenkins.split() %}
+CATALINA_OPTS="$CATALINA_OPTS {{ opt }}"
+{% endfor %}
+{% endif %}

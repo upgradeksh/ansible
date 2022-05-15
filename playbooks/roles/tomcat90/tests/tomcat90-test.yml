@@ -1,0 +1,22 @@
+---
+- name: configuration for tomcat9
+  hosts: all
+  vars:
+    domain: ansible.tomcat90.test
+
+  vars_files:
+    - "./domains/{{ domain }}.yml"
+
+  pre_tasks:
+    - name: check if we have all requred args
+      assert:
+        that:
+          - domain|length > 0
+
+#  tasks:
+#    - name: debug variable
+#      debug: 
+#        var: conf
+
+  roles:
+    - role: ../../tomcat90

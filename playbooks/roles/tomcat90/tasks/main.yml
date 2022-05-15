@@ -1,0 +1,17 @@
+---
+  - include_tasks: 10-java.yml
+  - include_tasks: 13-tomcat-user.yml
+  - include_tasks: 15-tomcat.yml
+  - include_tasks: 20-systemd.yml
+  - include_tasks: 25-conf.yml
+  - include_tasks: 30-certificate.yml
+    when: https_server == 'enable'
+  - include_tasks: 35-logrotate.yml
+  - include_tasks: 40-pinpoint.yml
+  - include_tasks: 45-jmxremote.yml
+  - include_tasks: 50-interlock.yml
+  - include_tasks: 55-deploy.yml
+  - include_tasks: 60-flush-handler.yml
+  - include_tasks: 65-ensure.yml
+  - include_tasks: 70-test.yml
+    when: test.path is defined

@@ -1,0 +1,24 @@
+---
+
+  - name: "logrotate | directory {{ tomcat.path.logs }}/old"
+    file:
+      path: "{{ tomcat.path.logs }}/old"
+      state: "directory"
+      owner: root
+      group: "{{ tomcat.group.name }}"
+      mode: 755
+    become: yes
+    tags:
+      - logrotate
+
+  ## this logrotate configuration will be replaced the installed one
+  - name: "logrotate | template /etc/logrotate.d/tomcat9-accesslog"
+    template:
+      src: logrotate.conf.j2
+      dest: "/etc/logrotate.d/tomcat9-accesslog"
+      owner: root
+      group: root
+      mode: 0644
+    become: yes
+    tags:
+      - logrotate

@@ -1,0 +1,14 @@
+---
+- name: "reload {{ tomcat.systemd.unit }}"
+  service:
+    name: "{{ tomcat.systemd.unit }}"
+    daemon_reload : yes
+  become: yes
+
+- name: "restart {{ tomcat.systemd.unit }}"
+  service:
+    name: "{{ tomcat.systemd.unit }}"
+    state: restarted
+    enabled: yes
+    daemon_reload : yes
+  become: yes

@@ -1,0 +1,8 @@
+---
+  - name: "remove deployment | {{ tomcat.path.appbase }}/{{ deploy_context_war }}"
+    file:
+      path: "{{ tomcat.path.appbase }}/{{ deploy_context_war }}"
+      state: absent
+    become: yes
+    tags:
+      - remove-deployment

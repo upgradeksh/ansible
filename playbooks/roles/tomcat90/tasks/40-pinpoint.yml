@@ -1,0 +1,139 @@
+---
+
+  - name: "pinpoint is enabled"
+    block: 
+      - name: "pinpoint | copy {{ tomcat.path.lib }}/{{ pinpoint_agent_name }}.tar.gz"
+        copy:
+          src: "src/{{ pinpoint_agent_name }}.tar.gz"
+          dest: "{{ tomcat.path.lib }}"
+          owner: root
+          group: root
+          mode: 0640
+        become: yes
+        tags:
+          - pinpoint
+
+      - name: "pinpoint | unarchive {{ tomcat.path.lib }}/{{ pinpoint_agent_name }}.tar.gz"
+        unarchive:
+          src: "{{ tomcat.path.lib }}/{{ pinpoint_agent_name }}.tar.gz"
+          dest: "{{ tomcat.path.lib }}"
+          creates: "{{ pinpoint_agent_dir }}"
+          remote_src: yes
+          owner: root
+          group: "{{ tomcat.group.name }}"
+        become: yes
+        tags:
+          - pinpoint
+
+      #### building profiles
+      - name: "pinpoint | directory {{ pinpoint_agent_dir }}/profiles/{{ env }}"
+        file:
+          path: "{{ pinpoint_agent_dir }}/profiles/{{ env }}"
+          state: directory
+          owner: root
+          group: "{{ tomcat.group.name }}"
+        become: yes
+        tags:
+          - pinpoint
+
+      ## log4j2.xml
+      - name: "pinpoint | copy {{ pinpoint_agent_dir }}/profiles/{{ env }}/log4j2.xml"
+        copy:
+          src: "{{ pinpoint_agent_dir }}/profiles/release/log4j2.xml"
+          dest: "{{ pinpoint_agent_dir }}/profiles/{{ env }}"
+          remote_src: yes
+          owner: root
+          group: "{{ tomcat.group.name }}"
+          force: no
+        become: yes
+        tags:
+          - pinpoint
+
+      - name: "pinpoint | lineinfile log4j2.xml"
+        lineinfile:
+          path: "{{ pinpoint_agent_dir }}/profiles/{{ env }}/log4j2.xml"
+          regexp: "{{ item.regexp }}"
+          line: "{{ item.line }}"
+          backrefs: yes
+        loop:
+          ## dollar sign($) must be escaped
+          - regexp: '(\s*<Property name="logging_dir">)\${sys:pinpoint.log}.+(</Property>)'
+            line:   '\1${sys:catalina.base}/logs/\2'
+
+          - regexp: '(\s*)<Logger name="com.navercorp.pinpoint" level="INFO" additivity="false">'
+            line:      '\1<Logger name="com.navercorp.pinpoint" level="{{ pinpoint.log4j2.level }}" additivity="false">'
+     
+          - regexp: '(\s*)<Logger name="io.grpc" level="INFO" additivity="false">'
+            line:      '\1<Logger name="io.grpc" level="{{ pinpoint.log4j2.level }}" additivity="false">'
+
+          - regexp: '(\s*)<Root level="INFO">'
+            line:      '\1<Root level="{{ pinpoint.log4j2.level }}">'
+        become: yes
+        notify:
+          - restart {{ tomcat.systemd.unit }}
+        tags:
+          - pinpoint
+
+      ## pinpoint.config
+      - name: "pinpoint | copy {{ pinpoint_agent_dir }}/profiles/{{ env }}/pinpoint.config"
+        copy:
+          src: "{{ pinpoint_agent_dir }}/profiles/release/pinpoint.config"
+          dest: "{{ pinpoint_agent_dir }}/profiles/{{ env }}"
+          remote_src: yes
+          owner: root
+          group: "{{ tomcat.group.name }}"
+          force: no
+        become: yes
+        tags:
+          - pinpoint
+
+      - name: "pinpoint | lineinfile pinpoint.config"
+        lineinfile:
+          path: "{{ pinpoint_agent_dir }}/profiles/{{ env }}/pinpoint.config"
+          regexp: "{{ item.regexp }}"
+          line:   "{{ item.line }}"
+        loop:
+          - regexp: '^profiler.transport.grpc.collector.ip'
+            line:    'profiler.transport.grpc.collector.ip={{ pinpoint.profiler.collector.ip }}'
+
+          - regexp: '^profiler.sampling.rate'
+            line:    'profiler.sampling.rate={{ pinpoint.profiler.sampling.rate }}'
+
+          - regexp: '^profiler.collector.ip'
+            line:    'profiler.collector.ip={{ pinpoint.profiler.collector.ip }}'
+        become: yes
+        notify:
+          - restart {{ tomcat.systemd.unit }}
+        tags:
+          - pinpoint
+
+      #### setenv
+      - name: "pinpoint | template {{ tomcat.path.bin }}/setenv.d/50-pinpoint.sh"
+        template:
+          src: 50-pinpoint.sh.j2
+          dest: "{{ tomcat.path.bin }}/setenv.d/50-pinpoint.sh"
+          owner: root
+          group: "{{ tomcat.group.name }}"
+          mode: 0640
+        become: yes
+        notify:
+          - restart {{ tomcat.systemd.unit }}
+        tags:
+          - pinpoint
+    when:
+      - pinpoint_agent is defined
+      - pinpoint_agent == "enable"
+
+  ## disabling task has to be at the end of tasks
+  - name: "pinpoint | absent {{ tomcat.path.bin }}/setenv.d/50-pinpoint.sh"
+    file:
+      path: "{{ tomcat.path.bin }}/setenv.d/50-pinpoint.sh"
+      state: absent
+    become: yes
+    when:
+      - pinpoint_agent is defined
+      - pinpoint_agent == "disable"
+    notify:
+      - restart {{ tomcat.systemd.unit }}
+    tags:
+      - pinpoint

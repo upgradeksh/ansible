@@ -1,0 +1,8 @@
+{% for key, value in jvm.java_opts.items() %}
+JAVA_OPTS="$JAVA_OPTS {{ key }}{{ value }}"
+{% endfor %}
+{% if java_opts_ext is defined and java_opts_ext is iterable %}
+{% for opt in java_opts_ext %}
+JAVA_OPTS="$JAVA_OPTS {{ opt }}"
+{% endfor %}
+{% endif %}

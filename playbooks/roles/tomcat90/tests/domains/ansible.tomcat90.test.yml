@@ -1,0 +1,38 @@
+---
+
+java_version: 8
+
+http_server: enable
+https_server: disable
+
+deploy_uri: https://tomcat.apache.org/tomcat-5.5-doc/appdev/sample/sample.war
+
+env: dev
+domain: ansible.tomcat90.test
+tomcat:
+  systemd:
+    readwritepaths:
+      - /tmp
+      - /var/lib/tomcat9/logs/old/
+
+
+heap:
+  Xms: 256m
+  Xmx: 512m
+
+pinpoint_agent: disable
+pinpoint:
+  profiler:
+    sampling:
+      rate: 5
+
+jvm:
+  catalina_opts:
+    "-server": ""
+    "-Dfile.encoding=": "euc-kr"
+    "-Dfile.client.encoding=": "euc-kr"
+
+test:
+  path: /sample/
+  expect:
+    code: 200

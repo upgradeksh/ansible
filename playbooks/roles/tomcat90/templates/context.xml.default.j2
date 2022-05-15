@@ -1,0 +1,11 @@
+<Context>
+{% if jndi is defined and jndi is not none %}
+{% for resource_dic in jndi %}
+  <Resource
+{% for key, value in resource_dic.items() %}
+    {{ key }}="{{ value }}"
+{% endfor %}
+  />
+{% endfor %}
+{% endif %}
+</Context>
